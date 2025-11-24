@@ -6,23 +6,19 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-scan:
+  ci:
     runs-on: ubuntu-latest
-      run:
-        working-directory: CPT-ANGULAR-Search-Widget
+
     steps:
       - uses: actions/checkout@v4
-       - name: List files (debug)
-        run: ls -R
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-       - name: Install dependencies
-        run: npm install
 
-      - name: Build application
-        run: npm run build
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - run: npm install
+      - run: npm run build
+
       - env:
           BLACKDUCK_URL: ${{ secrets.BLACKDUCK_URL }}
           BLACKDUCK_API_TOKEN: ${{ secrets.BLACKDUCK_API_TOKEN }}
@@ -60,5 +56,4 @@ jobs:
         env:
           FORTIFY_URL: ${{ secrets.FORTIFY_URL }}
           FORTIFY_TOKEN: ${{ secrets.FORTIFY_TOKEN }}
-        run: |
-          echo "Replace this with your actual Fortify upload command"
+        run: echo "Replace this with your actual Fortify upload command"
