@@ -1,33 +1,25 @@
-name: CPT-ANGULAR-Search-Widget Pipeline
+name: CPT-ANGULAR-Search-Widget
 
 on:
   push:
-    branches:
-      - main       # change if you use a different branch
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  build-and-scan:
-    # Change to "self-hosted" if Black Duck / Fortify are on your own runner
+  ci:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: 18
 
-      - name: Install dependencies
-        run: npm install
+      - run: npm install
+      - run: npm run build
 
-      - name: Build application
-        run: npm run build
-
-      - name: Run Synopsys Detect (Black Duck)
-        env:
+      - env:
           BLACKDUCK_URL: ${{ secrets.BLACKDUCK_URL }}
           BLACKDUCK_API_TOKEN: ${{ secrets.BLACKDUCK_API_TOKEN }}
         run: |
@@ -40,10 +32,8 @@ jobs:
             --detect.project.version.name="1.20.0" \
             --detect.source.path="."
 
-      - name: Run Fortify SCA (build and scan)
-        run: |
+      - run: |
           sourceanalyzer -b CPT-ANGULAR-Search-Widget -clean
-
           sourceanalyzer -b CPT-ANGULAR-Search-Widget \
             babel.config.js \
             coverage \
@@ -56,24 +46,15 @@ jobs:
             rollup.config.js \
             scripts \
             src
-
           sourceanalyzer -b CPT-ANGULAR-Search-Widget \
             -scan \
             -f cpt.angular-search-widget1.fpr \
             -verbose \
             -logfile fortify-scan.log
 
-      - name: Upload Fortify FPR to SSC (example)
-        if: always()
+      - if: always()
         env:
           FORTIFY_URL: ${{ secrets.FORTIFY_URL }}
           FORTIFY_TOKEN: ${{ secrets.FORTIFY_TOKEN }}
         run: |
           echo "Replace this with your actual Fortify upload command"
-          # Example if fortifyclient is installed:
-          # fortifyclient uploadFPR \
-          #   -url "$FORTIFY_URL" \
-          #   -authtoken "$FORTIFY_TOKEN" \
-          #   -file cpt.angular-search-widget1.fpr \
-          #   -project "CPT-Search Widget UIaaS" \
-          #   -version "release"
