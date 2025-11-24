@@ -1,36 +1,79 @@
-# This is a basic workflow to help you get started with Actions
+name: CPT-ANGULAR-Search-Widget Pipeline
 
-name: CI
-
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
-  # Allows you to run this workflow manually from the Actions tab
+    branches:
+      - main       # change if you use a different branch
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  build-and-scan:
+    # Change to "self-hosted" if Black Duck / Fortify are on your own runner
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build application
+        run: npm run build
+
+      - name: Run Synopsys Detect (Black Duck)
+        env:
+          BLACKDUCK_URL: ${{ secrets.BLACKDUCK_URL }}
+          BLACKDUCK_API_TOKEN: ${{ secrets.BLACKDUCK_API_TOKEN }}
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+          curl -s -L https://detect.synopsys.com/detect.sh -o detect.sh
+          chmod +x detect.sh
+          ./detect.sh \
+            --blackduck.url="$BLACKDUCK_URL" \
+            --blackduck.api.token="$BLACKDUCK_API_TOKEN" \
+            --detect.project.name="CPT-Search Widget UIaaS" \
+            --detect.project.version.name="1.20.0" \
+            --detect.source.path="."
+
+      - name: Run Fortify SCA (build and scan)
+        run: |
+          sourceanalyzer -b CPT-ANGULAR-Search-Widget -clean
+
+          sourceanalyzer -b CPT-ANGULAR-Search-Widget \
+            babel.config.js \
+            coverage \
+            jest.config.js \
+            node_modules \
+            package.json \
+            package-lock.json \
+            public \
+            README.md \
+            rollup.config.js \
+            scripts \
+            src
+
+          sourceanalyzer -b CPT-ANGULAR-Search-Widget \
+            -scan \
+            -f cpt.angular-search-widget1.fpr \
+            -verbose \
+            -logfile fortify-scan.log
+
+      - name: Upload Fortify FPR to SSC (example)
+        if: always()
+        env:
+          FORTIFY_URL: ${{ secrets.FORTIFY_URL }}
+          FORTIFY_TOKEN: ${{ secrets.FORTIFY_TOKEN }}
+        run: |
+          echo "Replace this with your actual Fortify upload command"
+          # Example if fortifyclient is installed:
+          # fortifyclient uploadFPR \
+          #   -url "$FORTIFY_URL" \
+          #   -authtoken "$FORTIFY_TOKEN" \
+          #   -file cpt.angular-search-widget1.fpr \
+          #   -project "CPT-Search Widget UIaaS" \
+          #   -version "release"
