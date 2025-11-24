@@ -9,6 +9,10 @@ jobs:
   ci:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: CPT-ANGULAR-Search-Widget   # 👈 change if folder name is different
+
     steps:
       - uses: actions/checkout@v4
 
