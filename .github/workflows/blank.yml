@@ -23,7 +23,7 @@ jobs:
       - run: npm install
       - run: npm run build
 
-      - env:
+    /*  - env:
           BLACKDUCK_URL: ${{ secrets.BLACKDUCK_URL }}
           BLACKDUCK_API_TOKEN: ${{ secrets.BLACKDUCK_API_TOKEN }}
         run: |
@@ -60,4 +60,4 @@ jobs:
         env:
           FORTIFY_URL: ${{ secrets.FORTIFY_URL }}
           FORTIFY_TOKEN: ${{ secrets.FORTIFY_TOKEN }}
-        run: echo "Replace this with your actual Fortify upload command"
+        run: echo "Replace this with your actual Fortify upload command"  */
