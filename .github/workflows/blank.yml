@@ -1,4 +1,4 @@
-name: CPT-ANGULAR-Search-Widget
+name: CPT-ANGULAR-Search-Widget POC
 
 on:
   push:
@@ -6,58 +6,36 @@ on:
   workflow_dispatch:
 
 jobs:
-  ci:
+  build-and-package:
     runs-on: ubuntu-latest
 
     defaults:
       run:
-        working-directory: CPT-ANGULAR-Search-Widget   # 👈 change if folder name is different
+        working-directory: CPT-ANGULAR-Search-Widget  # change if folder name is different
 
     steps:
-      - uses: actions/checkout@v4
+      # 1) Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      # 2) Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      - run: npm install
-      - run: npm run build
+      # 3) Install dependencies
+      - name: Install dependencies
+        run: npm install
 
-    /*  - env:
-          BLACKDUCK_URL: ${{ secrets.BLACKDUCK_URL }}
-          BLACKDUCK_API_TOKEN: ${{ secrets.BLACKDUCK_API_TOKEN }}
-        run: |
-          curl -s -L https://detect.synopsys.com/detect.sh -o detect.sh
-          chmod +x detect.sh
-          ./detect.sh \
-            --blackduck.url="$BLACKDUCK_URL" \
-            --blackduck.api.token="$BLACKDUCK_API_TOKEN" \
-            --detect.project.name="CPT-Search Widget UIaaS" \
-            --detect.project.version.name="1.20.0" \
-            --detect.source.path="."
+      # 4) Build Angular app
+      - name: Build application
+        run: npm run build
 
-      - run: |
-          sourceanalyzer -b CPT-ANGULAR-Search-Widget -clean
-          sourceanalyzer -b CPT-ANGULAR-Search-Widget \
-            babel.config.js \
-            coverage \
-            jest.config.js \
-            node_modules \
-            package.json \
-            package-lock.json \
-            public \
-            README.md \
-            rollup.config.js \
-            scripts \
-            src
-          sourceanalyzer -b CPT-ANGULAR-Search-Widget \
-            -scan \
-            -f cpt.angular-search-widget1.fpr \
-            -verbose \
-            -logfile fortify-scan.log
-
-      - if: always()
-        env:
-          FORTIFY_URL: ${{ secrets.FORTIFY_URL }}
-          FORTIFY_TOKEN: ${{ secrets.FORTIFY_TOKEN }}
-        run: echo "Replace this with your actual Fortify upload command"  */
+      # 5) Package build output as artifact (sample "deployment" for POC)
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpt-angular-search-widget-dist
+          # path is from repo root (not working-directory), so include folder name
+          path: CPT-ANGULAR-Search-Widget/dist/
