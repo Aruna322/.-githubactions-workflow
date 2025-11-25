@@ -11,7 +11,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: CPT-ANGULAR-Search-Widget  # change if folder name is different
+        working-directory: frontend  # change if folder name is different
 
     steps:
       # 1) Checkout code
